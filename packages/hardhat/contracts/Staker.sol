@@ -14,27 +14,35 @@ contract Staker {
 
   uint256 public constant threshold = 1 ether;
   uint256 public deadline = block.timestamp + 30 seconds;
-  bool openForWithdraw = false;
+  bool public openForWithdraw = false;
   mapping ( address => uint256 ) public balances;
   event Stake(address, uint256);
+
+// 1. Stake period
+// 2. If threshold of ETH met === success state
+// 3. If not, withdraw state where users can withdraw funds
+
+// 1. Execute func that anyone can call after deadline
+// 2. If threshold met by the deadline then exampleExternalContract.complete
+// 3. If threshold not met by deadline then openForWithdraw bool should be true and users can use withdraw func
+// 4. timeLeft() func returns how much time left
 
   modifier canWithdraw {
     require(openForWithdraw == true);
     _;
   }
 
-  // Collect funds in a payable `stake()` function and track individual `balances` with a mapping:
-  // ( Make sure to add a `Stake(address,uint256)` event and emit it for the frontend <List/> display )
+  modifier timeUp {
+    require(timeLeft() == 0);
+    _;
+  }
 
   function stake() public payable {
     balances[msg.sender] += msg.value;
     emit Stake(msg.sender, msg.value);
   }
 
-  // After some `deadline` allow anyone to call an `execute()` function
-  // If the deadline has passed and the threshold is met, it should call `exampleExternalContract.complete{value: address(this).balance}()`
-
-  function execute() public {
+  function execute() public timeUp {
     if (address(this).balance >= threshold) {
       exampleExternalContract.complete{value: address(this).balance}();
     } else {
@@ -42,15 +50,18 @@ contract Staker {
     }
   }
 
-  // If the `threshold` was not met, allow everyone to call a `withdraw()` function to withdraw their balance
+  // function withdraw() public payable canWithdraw {
+  //   msg.sender.transfer(msg.value);
+  // }
 
-  function withdraw() public canWithdraw {
-    
+  function timeLeft() view public returns (uint) {
+    if (block.timestamp >= deadline) {
+      return 0;
+    }
+    return deadline - block.timestamp;
   }
 
-  // Add a `timeLeft()` view function that returns the time left before the deadline for the frontend
-
-
-  // Add the `receive()` special function that receives eth and calls stake()
-
+  receive() external payable {
+    stake();
+  }
 }
