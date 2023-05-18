@@ -50,9 +50,9 @@ contract Staker {
     }
   }
 
-  // function withdraw() public payable canWithdraw {
-  //   msg.sender.transfer(msg.value);
-  // }
+  function withdraw() public payable canWithdraw {
+    msg.sender.transfer(msg.value);
+  }
 
   function timeLeft() view public returns (uint) {
     if (block.timestamp >= deadline) {
